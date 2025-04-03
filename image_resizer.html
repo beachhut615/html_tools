@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer</title>
+    <style>
+    body{
+    width: 100%;
+    margin: 0 auto;
+    display: inline-block;
+    float: left;
+    font-family: Arial, sans-serif;
+    }
+    #first{
+    width: 90%;
+    margin: 0 0 0 25%;
+    display: inline-block;
+    float: left;
+    }
+    #maxWidth{
+    width: 100px;
+    }
+    #maxHeight{
+    width: 100px;
+    }
+    #maxWidthLabel, #maxHeightLabel{
+    margin: 0 auto;
+    float: left;
+    width: 120px;
+    }
+    </style>
+</head>
+<body>
+<div id="first">
+    <h1>Image Resizer</h1>
+    <input type="file" id="fileInput" accept="image/*">
+    <br /><br />
+    <div>
+        <label for="maxWidth" id="maxWidthLabel">Max W px:</label>
+        <input type="number" id="maxWidth" value="" min="1" max="4000">
+<br /><br />
+    </div>
+    <div>
+        <label for="maxHeight" id="maxHeightLabel">Max H px:</label>
+        <input type="number" id="maxHeight" value="" min="1" max="4000">
+<br /><br />
+    </div>
+    <button id="resizeButton" disabled>Resize Image</button><br /><br />
+    <button id="downloadButton" disabled style="display:none;">Download Resized Image</button><br />
+    <div id="sizeInfo"></div><br />
+    <div id="originalSizeInfo"></div>
+</div>
+        <script>
+        window.onload = function() {
+            document.getElementById('fileInput').value = '';
+        };
+    </script>
+
+    <script>
+    window.onload = function() {
+        document.getElementById('fileInput').value = '';
+        document.getElementById('maxWidth').value = '';
+        document.getElementById('maxHeight').value = '';
+    };
+
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    document.getElementById('maxWidth').value = img.naturalWidth;
+                    document.getElementById('maxHeight').value = img.naturalHeight;
+                    document.getElementById('resizeButton').disabled = false;
+                    document.getElementById('originalSizeInfo').innerText = `Original: ${img.naturalWidth}x${img.naturalHeight} px`;
+                };
+            };
+            reader.readAsDataURL(file);
+        } else {
+            alert('Please select a valid image file.');
+        }
+    });
+
+    document.getElementById('resizeButton').addEventListener('click', function() {
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        if (!file) {
+            alert('Please select an image file first.');
+            return;
+        }
+
+        const maxWidth = parseInt(document.getElementById('maxWidth').value);
+        const maxHeight = parseInt(document.getElementById('maxHeight').value);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                let width = img.naturalWidth;
+                let height = img.naturalHeight;
+
+                if (width > maxWidth) {
+                    height *= maxWidth / width;
+                    width = maxWidth;
+                }
+                if (height > maxHeight) {
+                    width *= maxHeight / height;
+                    height = maxHeight;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const resizedImage = canvas.toDataURL('image/jpeg', 0.9);
+                const downloadButton = document.getElementById('downloadButton');
+                downloadButton.href = resizedImage;
+                downloadButton.download = 'resized_image.jpg';
+                downloadButton.style.display = 'block';
+                downloadButton.disabled = false;
+                document.getElementById('sizeInfo').innerText = `Resized: ${width}x${height} px`;
+            };
+        };
+        reader.readAsDataURL(file);
+    });
+
+    document.getElementById('downloadButton').addEventListener('click', function() {
+        const downloadLink = document.createElement('a');
+        downloadLink.href = this.href;
+        downloadLink.download = this.download;
+        downloadLink.click();
+    });
+</script>
+</body>
+</html>
+
